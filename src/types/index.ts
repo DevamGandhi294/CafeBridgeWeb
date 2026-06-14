@@ -5,6 +5,13 @@ export interface User {
   role: 'owner' | 'manager' | 'staff';
   avatar?: string;
   restaurantName: string;
+  address?: string;
+  phone?: string;
+  gst?: string;
+  gstPercentage?: number;
+  subscription?: string;
+  code?: string;
+  createdDate?: string;
 }
 
 export interface AuthState {
@@ -21,6 +28,7 @@ export interface MenuItem {
   status: 'in_stock' | 'sold_out' | 'hidden';
   available: boolean;
   image: string;
+  option?: string;
 }
 
 export interface Table {
@@ -81,7 +89,14 @@ export interface DashboardStats {
   serviceCharge: number;
   gst: number;
   revenueChange: number;
-  topSelling: { name: string; orders: number; revenue: number; image: string }[];
+  totalOrders: number;
+  averageOrderValue: number;
+  totalItemsCount: number;
+  cancelledOrders: number;
+  bestSellingItem: string;
+  bestSellingCategory: string;
+  itemCounts: Record<string, number>;
+  topSelling: { name: string; orders: number; revenue: number; image: string }[]; // Legacy — UI now uses itemCounts
   staffNotes: { id: string; author: string; role: string; message: string; time: string; avatar?: string }[];
   menuQuickActions: { id: string; name: string; status: string; available: boolean; image?: string }[];
   lowStockAlert: { items: string[] };

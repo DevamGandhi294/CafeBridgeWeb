@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 export default function RegisterPage() {
   const { signUp } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: '', email: '', restaurantName: '', password: '', confirm: '' });
+  const [form, setForm] = useState({ name: '', email: '', restaurantName: '', address: '', phone: '', gst: '', gstPercentage: '18', password: '', confirm: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,7 +21,7 @@ export default function RegisterPage() {
     if (form.password !== form.confirm) { setError('Passwords do not match.'); return; }
     if (form.password.length < 8) { setError('Password must be at least 8 characters.'); return; }
     setLoading(true);
-    const ok = await signUp(form.name, form.email, form.password, form.restaurantName);
+    const ok = await signUp(form.name, form.email, form.password, form.restaurantName, form.address, form.phone, form.gst, parseFloat(form.gstPercentage));
     setLoading(false);
     if (ok) navigate('/dashboard');
     else setError('Registration failed. Please try again.');
@@ -146,6 +146,56 @@ export default function RegisterPage() {
                   required
                   className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all"
                   placeholder="you@restaurant.com"
+                />
+              </div>
+
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Address</label>
+                <input
+                  type="text"
+                  value={form.address}
+                  onChange={update('address')}
+                  required
+                  className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all"
+                  placeholder="123 Main Street, City"
+                />
+              </div>
+
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone number</label>
+                <input
+                  type="tel"
+                  value={form.phone}
+                  onChange={update('phone')}
+                  required
+                  className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all"
+                  placeholder="1234567890"
+                />
+              </div>
+
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">GST Number (optional)</label>
+                <input
+                  type="text"
+                  value={form.gst}
+                  onChange={update('gst')}
+                  className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all"
+                  placeholder="GSTIN12345678"
+                />
+              </div>
+
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">GST Percentage</label>
+                <input
+                  type="number"
+                  value={form.gstPercentage}
+                  onChange={update('gstPercentage')}
+                  required
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  className="w-full px-3.5 py-2.5 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 transition-all"
+                  placeholder="18"
                 />
               </div>
 

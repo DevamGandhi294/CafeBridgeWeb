@@ -1,6 +1,8 @@
-import { Shield, Edit3, ExternalLink, CreditCard, Plus, ArrowUpDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Shield, Edit3, ExternalLink, CreditCard, Plus, ArrowUpDown, X, Lightbulb, Trash2 } from 'lucide-react';
 import Layout from '../components/layout/Layout';
 import { useAuth } from '../context/AuthContext';
+import { suggestionsService, Suggestion } from '../services/suggestionsService';
 
 const planDetails = {
   name: 'Pro Enterprise Plan',
@@ -30,7 +32,92 @@ const statusDots = {
 };
 
 export default function ProfilePage() {
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [newSuggestion, setNewSuggestion] = useState('');
+  const [isSavingSuggestion, setIsSavingSuggestion] = useState(false);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(true);
+
+  // Load suggestions from Firebase on component mount
+  useEffect(() => {
+    if (user?.email) {
+      loadSuggestions();
+    }
+  }, [user?.email]);
+
+  const loadSuggestions = async () => {
+    if (!user?.email) return;
+    setIsLoadingSuggestions(true);
+    try {
+      const data = await suggestionsService.getSuggestions(user.email);
+      setSuggestions(data);
+    } catch (error) {
+      console.error('Error loading suggestions:', error);
+    } finally {
+      setIsLoadingSuggestions(false);
+    }
+  };
+  
+  const [editForm, setEditForm] = useState({
+    name: user?.name || '',
+    restaurantName: user?.restaurantName || '',
+    address: user?.address || '',
+    phone: user?.phone || '',
+    gst: user?.gst || '',
+  });
+
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    await updateProfile(editForm);
+    setIsSaving(false);
+    setIsEditModalOpen(false);
+  };
+
+  const handleOpenEdit = () => {
+    setEditForm({
+      name: user?.name || '',
+      restaurantName: user?.restaurantName || '',
+      address: user?.address || '',
+      phone: user?.phone || '',
+      gst: user?.gst || '',
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleAddSuggestion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSuggestion.trim() || !user?.email) return;
+    
+    setIsSavingSuggestion(true);
+    try {
+      const newSugg = await suggestionsService.addSuggestion(
+        user.email,
+        newSuggestion,
+        user?.name || 'User'
+      );
+      if (newSugg) {
+        setSuggestions([newSugg, ...suggestions]);
+        setNewSuggestion('');
+      }
+    } catch (error) {
+      console.error('Error adding suggestion:', error);
+    } finally {
+      setIsSavingSuggestion(false);
+    }
+  };
+
+  const handleDeleteSuggestion = async (id: string) => {
+    try {
+      await suggestionsService.deleteSuggestion(id);
+      setSuggestions(suggestions.filter(s => s.id !== id));
+    } catch (error) {
+      console.error('Error deleting suggestion:', error);
+    }
+  };
 
   return (
     <Layout topBarPlaceholder="Search orders, guests, or menu items...">
@@ -46,7 +133,7 @@ export default function ProfilePage() {
               <Shield size={14} />
               Security Settings
             </button>
-            <button className="flex items-center gap-1.5 bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm px-4 py-2 rounded-xl transition-colors">
+            <button onClick={handleOpenEdit} className="flex items-center gap-1.5 bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm px-4 py-2 rounded-xl transition-colors">
               <Edit3 size={14} />
               Edit Profile
             </button>
@@ -63,12 +150,12 @@ export default function ProfilePage() {
                   <img src={user.avatar} alt={user.name} className="w-16 h-16 rounded-2xl object-cover" />
                 ) : (
                   <div className="w-16 h-16 rounded-2xl bg-brand-100 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-brand-600">{user?.name?.[0]}</span>
+                    <span className="text-2xl font-bold text-brand-600 uppercase">{user?.restaurantName?.[0] || user?.name?.[0]}</span>
                   </div>
                 )}
                 <div>
-                  <h2 className="text-lg font-bold text-gray-900">{user?.restaurantName ?? 'Cafe Bridge Central'}</h2>
-                  <p className="text-sm text-gray-500">Primary Operations Hub • ID: CB-99281</p>
+                  <h2 className="text-lg font-bold text-gray-900 capitalize">{user?.restaurantName ?? 'Cafe Bridge Central'}</h2>
+                  <p className="text-sm text-gray-500">Primary Operations Hub • ID: {user?.code ?? 'CB-99281'}</p>
                   <span className="inline-flex items-center gap-1 mt-1.5 bg-green-100 text-green-700 text-[10px] font-bold uppercase tracking-wide px-2.5 py-0.5 rounded-full">
                     <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
                     Active Status
@@ -79,20 +166,20 @@ export default function ProfilePage() {
               <div className="grid grid-cols-2 gap-6 border-t border-gray-100 pt-5">
                 <div>
                   <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Business Address</p>
-                  <p className="text-sm text-gray-700 leading-relaxed">128 Artisan Way, Suite 400<br />North Waterfront, CA 94107</p>
+                  <p className="text-sm text-gray-700 leading-relaxed capitalize">{user?.address || 'Address not provided'}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Legal Representative</p>
-                  <p className="text-sm text-gray-700">{user?.name ?? 'Sarah Jenkins'}</p>
+                  <p className="text-sm text-gray-700 capitalize">{user?.name ?? 'Not provided'}</p>
                   <div className="mt-2">
-                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Tax ID / EIN</p>
-                    <p className="text-sm text-gray-700">XX-XXX7841</p>
+                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">Tax ID / GST</p>
+                    <p className="text-sm text-gray-700">{user?.gst || 'Not provided'}</p>
                   </div>
                 </div>
                 <div className="col-span-2">
                   <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Contact Details</p>
-                  <p className="text-sm text-gray-700">{user?.email ?? 'central@cafebridge.com'}</p>
-                  <p className="text-sm text-gray-500">+1 (555) 482-9012</p>
+                  <p className="text-sm text-gray-700">{user?.email ?? 'Not provided'}</p>
+                  <p className="text-sm text-gray-500">{user?.phone ? `+91 ${user.phone}` : 'Not provided'}</p>
                 </div>
               </div>
             </div>
@@ -159,7 +246,7 @@ export default function ProfilePage() {
             {/* Active plan */}
             <div className="bg-brand-500 rounded-2xl p-5 text-white">
               <span className="text-[10px] font-bold uppercase tracking-widest opacity-70 border border-white/30 px-2 py-0.5 rounded-full">Active Plan</span>
-              <h2 className="text-2xl font-bold mt-3 mb-1">{planDetails.name}</h2>
+              <h2 className="text-2xl font-bold mt-3 mb-1 capitalize">{user?.subscription ? `${user.subscription} Plan` : planDetails.name}</h2>
               <p className="text-sm opacity-70 mb-5">{planDetails.description}</p>
 
               <div className="space-y-3">
@@ -214,9 +301,150 @@ export default function ProfilePage() {
                 </button>
               </div>
             </div>
+
+            {/* Suggestions */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <Lightbulb size={18} className="text-yellow-500" />
+                <h3 className="font-bold text-gray-900">Suggestions</h3>
+              </div>
+              
+              <form onSubmit={handleAddSuggestion} className="mb-4">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newSuggestion}
+                    onChange={(e) => setNewSuggestion(e.target.value)}
+                    placeholder="Add a suggestion..."
+                    className="flex-1 px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:border-brand-500 focus:bg-white outline-none transition-all"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isSavingSuggestion || !newSuggestion.trim()}
+                    className="px-3 py-2 bg-brand-500 hover:bg-brand-600 disabled:bg-gray-300 text-white text-sm font-medium rounded-lg transition-colors"
+                  >
+                    <Plus size={16} />
+                  </button>
+                </div>
+              </form>
+
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {isLoadingSuggestions ? (
+                  <p className="text-sm text-gray-400 text-center py-4">Loading suggestions...</p>
+                ) : suggestions.length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-4">No suggestions yet</p>
+                ) : (
+                  suggestions.map((suggestion) => (
+                    <div key={suggestion.id} className="bg-gray-50 rounded-lg p-3 flex items-start gap-3 group hover:bg-gray-100 transition-colors">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-gray-800">{suggestion.text}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs text-gray-400">{suggestion.author}</span>
+                          <span className="text-xs text-gray-300">•</span>
+                          <span className="text-xs text-gray-400">{suggestion.date}</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteSuggestion(suggestion.id)}
+                        className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Edit Profile Modal */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <h2 className="text-xl font-bold text-gray-900">Edit Profile</h2>
+              <button 
+                onClick={() => setIsEditModalOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500 transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Business / Restaurant Name</label>
+                  <input 
+                    type="text" 
+                    value={editForm.restaurantName}
+                    onChange={e => setEditForm(prev => ({ ...prev, restaurantName: e.target.value }))}
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:border-brand-500 focus:bg-white outline-none transition-all"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Legal Representative (Owner Name)</label>
+                  <input 
+                    type="text" 
+                    value={editForm.name}
+                    onChange={e => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:border-brand-500 focus:bg-white outline-none transition-all"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1.5">Phone Number</label>
+                    <input 
+                      type="text" 
+                      value={editForm.phone}
+                      onChange={e => setEditForm(prev => ({ ...prev, phone: e.target.value }))}
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:border-brand-500 focus:bg-white outline-none transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-1.5">Tax ID / GST</label>
+                    <input 
+                      type="text" 
+                      value={editForm.gst}
+                      onChange={e => setEditForm(prev => ({ ...prev, gst: e.target.value }))}
+                      className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:border-brand-500 focus:bg-white outline-none transition-all"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-600 mb-1.5">Business Address</label>
+                  <textarea 
+                    value={editForm.address}
+                    onChange={e => setEditForm(prev => ({ ...prev, address: e.target.value }))}
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:border-brand-500 focus:bg-white outline-none transition-all min-h-[80px]"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-4 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="px-5 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-xl transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="px-6 py-2.5 text-sm font-semibold text-white bg-brand-500 hover:bg-brand-600 rounded-xl transition-colors disabled:opacity-70"
+                >
+                  {isSaving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }

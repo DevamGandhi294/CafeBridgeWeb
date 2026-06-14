@@ -1,12 +1,42 @@
-import { useState } from 'react';
-import { TrendingUp, AlertTriangle, Plus, Send, Toggle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { TrendingUp, AlertTriangle, Plus, Send } from 'lucide-react';
 import Layout from '../components/layout/Layout';
 import { dashboardStats } from '../data/dashboard';
+import { useAuth } from '../context/AuthContext';
+import { revenueService } from '../services/revenueService';
 
 export default function DashboardPage() {
-  const stats = dashboardStats;
+  const { user } = useAuth();
+  const [stats, setStats] = useState(dashboardStats);
   const [noteText, setNoteText] = useState('');
   const [quickActions, setQuickActions] = useState(stats.menuQuickActions);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchRevenueData() {
+      if (user?.email) {
+        const revenueData = await revenueService.getTodayRevenue(user.email);
+        if (revenueData) {
+          setStats(prev => ({
+            ...prev,
+            dailyRevenue: revenueData.totalRevenue,
+            totalOrders: revenueData.totalOrders,
+            averageOrderValue: revenueData.averageOrderValue,
+            totalItemsCount: revenueData.totalItemsCount,
+            cancelledOrders: revenueData.cancelledOrders,
+            bestSellingItem: revenueData.bestSellingItem,
+            bestSellingCategory: revenueData.bestSellingCategory,
+            itemCounts: revenueData.itemCounts,
+            subtotal: revenueData.totalRevenue * 0.85,
+            serviceCharge: revenueData.totalRevenue * 0.075,
+            gst: revenueData.totalRevenue * 0.075,
+          }));
+        }
+        setLoading(false);
+      }
+    }
+    fetchRevenueData();
+  }, [user]);
 
   function toggleItem(id: string) {
     setQuickActions(prev => prev.map(a => a.id === id ? { ...a, available: !a.available } : a));
@@ -15,13 +45,19 @@ export default function DashboardPage() {
   return (
     <Layout topBarPlaceholder="Search orders, menu, or staff...">
       <div className="p-6 space-y-5">
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-gray-500">Loading revenue data...</div>
+          </div>
+        ) : (
+          <>
         {/* Low stock alert */}
         <div className="flex items-center justify-between bg-orange-50 border border-orange-200 rounded-xl px-4 py-3">
           <div className="flex items-center gap-2.5">
             <AlertTriangle size={16} className="text-orange-500 flex-shrink-0" />
             <div>
               <span className="text-orange-700 font-semibold text-sm">Low Stock Inventory Alerts</span>
-              <span className="text-orange-600 text-sm ml-2">{stats.lowStockAlert.items.join(', ')}</span>
+              <span className="text-orange-600 text-sm ml-2">₹{stats.lowStockAlert.items.join(', ')}</span>
             </div>
           </div>
           <button className="text-brand-500 hover:text-brand-600 font-semibold text-sm whitespace-nowrap ml-4">
@@ -35,7 +71,7 @@ export default function DashboardPage() {
             <div className="flex items-start justify-between mb-4">
               <div>
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">Daily Revenue Snapshot</p>
-                <div className="text-4xl font-bold text-brand-500">${stats.dailyRevenue.toLocaleString('en', { minimumFractionDigits: 2 })}</div>
+                <div className="text-4xl font-bold text-brand-500">₹{stats.dailyRevenue.toLocaleString('en', { minimumFractionDigits: 2 })}</div>
                 <div className="flex items-center gap-1 mt-1">
                   <TrendingUp size={13} className="text-green-500" />
                   <span className="text-green-600 text-xs font-medium">{stats.revenueChange}% increase from yesterday</span>
@@ -47,32 +83,65 @@ export default function DashboardPage() {
               </button>
             </div>
 
-            <div className="border-t border-gray-100 pt-4 grid grid-cols-3 gap-4">
+            <div className="border-t border-gray-100 pt-4 grid grid-cols-2 lg:grid-cols-4 gap-4">
               {[
-                { label: 'Subtotal', value: stats.subtotal },
-                { label: 'Service Charge', value: stats.serviceCharge },
-                { label: 'GST (7%)', value: stats.gst },
+                { label: 'Total Orders', value: stats.totalOrders },
+                { label: 'Avg Order Value', value: `₹${stats.averageOrderValue}` },
+                { label: 'Total Items', value: stats.totalItemsCount },
+                { label: 'Cancelled', value: stats.cancelledOrders },
               ].map(({ label, value }) => (
                 <div key={label}>
                   <p className="text-xs text-gray-400 mb-0.5">{label}</p>
-                  <p className="text-lg font-semibold text-gray-800">${value.toFixed(2)}</p>
+                  <p className="text-lg font-semibold text-gray-800">{value}</p>
                 </div>
               ))}
             </div>
+
+            <div className="border-t border-gray-100 pt-4 mt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-xs text-gray-400 mb-0.5">Best Selling Item</p>
+                  <p className="text-sm font-semibold text-gray-800">{stats.bestSellingItem}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400 mb-0.5">Best Selling Category</p>
+                  <p className="text-sm font-semibold text-gray-800">{stats.bestSellingCategory}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* <div className="border-t border-gray-100 pt-4 mt-4 grid grid-cols-3 gap-4">
+              {[
+                { label: 'Total Orders', value: String(stats.totalOrders) },
+                { label: 'Avg Order Price', value: `₹${stats.averageOrderValue}` },
+                { label: 'Cancelled Orders', value: String(stats.cancelledOrders) },
+              ].map(({ label, value }) => (
+                <div key={label}>
+                  <p className="text-xs text-gray-400 mb-0.5">{label}</p>
+                  <p className="text-lg font-semibold text-gray-800">{value}</p>
+                </div>
+              ))}
+            </div> */}
           </div>
 
           {/* Top selling */}
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
             <h3 className="font-bold text-gray-900 mb-4">Top Selling Today</h3>
             <div className="space-y-4">
-              {stats.topSelling.map(item => (
-                <div key={item.name} className="flex items-center gap-3">
-                  <img src={item.image} alt={item.name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-800 truncate">{item.name}</p>
-                    <p className="text-xs text-gray-400">{item.orders} orders today</p>
+              {stats.itemCounts && Object.entries(stats.itemCounts)
+                .sort(([, a], [, b]) => b - a)
+                .map(([name, qty], index) => (
+                <div key={name} className="flex items-center gap-3">
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 font-bold text-lg ${
+                    index === 0 ? 'bg-brand-100 text-brand-600' : index === 1 ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'
+                  }`}>
+                    {name.charAt(0).toUpperCase()}
                   </div>
-                  <span className="text-brand-500 font-bold text-sm">${item.revenue.toFixed(2)}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-800 truncate capitalize">{name}</p>
+                    <p className="text-xs text-gray-400">Sold today</p>
+                  </div>
+                  <span className="text-brand-500 font-bold text-sm">{qty} Sold</span>
                 </div>
               ))}
             </div>
@@ -107,9 +176,9 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => toggleItem(item.id)}
-                      className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${item.available ? 'bg-brand-500' : 'bg-gray-300'}`}
+                      className={`flex items-center w-9 h-5 rounded-full p-[2px] transition-colors shrink-0 ${item.available ? 'bg-brand-500' : 'bg-gray-300'}`}
                     >
-                      <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${item.available ? 'translate-x-4' : 'translate-x-0.5'}`} />
+                      <span className={`w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${item.available ? 'translate-x-4' : 'translate-x-0'}`} />
                     </button>
                   </div>
                   <p className={`text-[10px] text-center ${item.available ? 'text-gray-400' : 'text-red-500'}`}>{item.status}</p>
@@ -163,6 +232,8 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+        </>
+        )}
       </div>
     </Layout>
   );

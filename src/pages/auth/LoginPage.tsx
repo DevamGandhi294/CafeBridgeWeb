@@ -6,8 +6,8 @@ import { useAuth } from '../../context/AuthContext';
 export default function LoginPage() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('admin@cafebridge.com');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -19,7 +19,7 @@ export default function LoginPage() {
     const ok = await signIn(email, password);
     setLoading(false);
     if (ok) navigate('/dashboard');
-    else setError('Invalid email or password. Try admin@cafebridge.com / password123');
+    else setError('Invalid email or password. Please try again.');
   }
 
   return (
@@ -144,12 +144,6 @@ export default function LoginPage() {
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
-
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-lg">
-            <p className="text-xs text-blue-600 font-medium mb-1">Demo credentials</p>
-            <p className="text-xs text-blue-500">admin@cafebridge.com / password123</p>
-            <p className="text-xs text-blue-500">manager@cafebridge.com / password123</p>
-          </div>
 
           <p className="text-center text-sm text-gray-500 mt-6">
             Don't have an account?{' '}

@@ -1,15 +1,23 @@
 import { DashboardStats } from '../types';
 
 export const dashboardStats: DashboardStats = {
-  dailyRevenue: 1842.50,
-  subtotal: 1620.00,
-  serviceCharge: 145.00,
-  gst: 77.50,
+  dailyRevenue: 1064,
+  subtotal: 902,
+  serviceCharge: 81,
+  gst: 81,
   revenueChange: 12,
-  topSelling: [
-    { name: 'Harvest Veggie Bowl', orders: 32, revenue: 448.00, image: 'https://images.pexels.com/photos/1640772/pexels-photo-1640772.jpeg?w=60&h=60&fit=crop' },
-    { name: 'Signature Latte', orders: 48, revenue: 312.00, image: 'https://images.pexels.com/photos/312418/pexels-photo-312418.jpeg?w=60&h=60&fit=crop' },
-  ],
+  totalOrders: 38,
+  averageOrderValue: 28,
+  totalItemsCount: 87,
+  cancelledOrders: 1,
+  bestSellingItem: 'shabji',
+  bestSellingCategory: 'Main Course',
+  itemCounts: {
+    lassi: 15,
+    roti: 30,
+    shabji: 42,
+  },
+  topSelling: [],
   staffNotes: [
     {
       id: 'n1',

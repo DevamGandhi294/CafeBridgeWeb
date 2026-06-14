@@ -8,6 +8,7 @@ import MenuManagementPage from './pages/MenuManagementPage';
 import InventoryManagementPage from './pages/InventoryManagementPage';
 import StaffManagementPage from './pages/StaffManagementPage';
 import ProfilePage from './pages/ProfilePage';
+import SubscriptionPage from './pages/SubscriptionPage';
 import SettingsPage from './pages/SettingsPage';
 import HelpPage from './pages/HelpPage';
 
@@ -24,6 +25,7 @@ export default function App() {
           <Route path="/inventory" element={<InventoryManagementPage />} />
           <Route path="/staff" element={<StaffManagementPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/subscription" element={<SubscriptionPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/help" element={<HelpPage />} />
           <Route path="*" element={<Navigate to="/login" replace />} />

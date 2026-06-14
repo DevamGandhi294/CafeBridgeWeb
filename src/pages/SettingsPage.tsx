@@ -1,4 +1,5 @@
-import { Settings, Bell, Shield, Globe, Palette } from 'lucide-react';
+import { useState } from 'react';
+import { Settings, Bell, Shield, Globe, Palette, DollarSign } from 'lucide-react';
 import Layout from '../components/layout/Layout';
 
 const sections = [
@@ -9,6 +10,19 @@ const sections = [
 ];
 
 export default function SettingsPage() {
+  const [gstPercentage, setGstPercentage] = useState(18);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSaveGST = async () => {
+    setIsSaving(true);
+    try {
+      // TODO: Save to Firebase
+      console.log('Saving GST percentage:', gstPercentage);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <Layout topBarPlaceholder="Search settings...">
       <div className="p-6 max-w-2xl">
@@ -28,6 +42,37 @@ export default function SettingsPage() {
               </div>
             </button>
           ))}
+
+          {/* GST Percentage Section */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mt-6">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <DollarSign size={18} className="text-gray-500" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-gray-800 mb-3">GST Percentage</p>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    value={gstPercentage}
+                    onChange={(e) => setGstPercentage(parseFloat(e.target.value) || 0)}
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    className="w-24 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand-500"
+                  />
+                  <span className="text-sm text-gray-500">%</span>
+                  <button
+                    onClick={handleSaveGST}
+                    disabled={isSaving}
+                    className="ml-auto px-4 py-2 bg-brand-500 text-white text-sm font-medium rounded-lg hover:bg-brand-600 disabled:bg-gray-300 transition-colors"
+                  >
+                    {isSaving ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </Layout>

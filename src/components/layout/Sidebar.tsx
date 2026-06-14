@@ -11,6 +11,7 @@ import {
   PlusCircle,
   LogOut,
   Coffee,
+  CreditCard,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -24,6 +25,7 @@ const mainNav = [
 ];
 
 const bottomNav = [
+  { to: '/subscription', label: 'Subscription', icon: CreditCard },
   { to: '/settings', label: 'Settings', icon: Settings },
   { to: '/help', label: 'Help', icon: HelpCircle },
 ];
@@ -78,13 +80,13 @@ export default function Sidebar() {
 
       {/* Bottom section */}
       <div className="px-3 pb-4 space-y-1 border-t border-[#2e2e2e] pt-3">
-        <button
+        {/* <button
           onClick={() => navigate('/tables')}
           className="w-full flex items-center justify-center gap-2 bg-brand-500 hover:bg-brand-600 text-white font-semibold text-sm py-2.5 rounded-lg transition-colors mb-2"
         >
           <PlusCircle size={16} strokeWidth={2.5} />
           New Reservation
-        </button>
+        </button> */}
 
         {bottomNav.map(({ to, label, icon: Icon }) => (
           <NavLink

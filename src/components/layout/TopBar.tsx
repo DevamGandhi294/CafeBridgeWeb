@@ -26,21 +26,24 @@ export default function TopBar({ placeholder = 'Search orders, menu, or staff...
       </div>
 
       <div className="flex items-center gap-3 ml-auto">
-        {/* Subscription badge */}
-        <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 bg-orange-50 border border-orange-200 rounded-full text-xs font-semibold text-orange-700 uppercase tracking-wide">
-          Pro Plan
-        </span>
+        {/* Business Info */}
+        {user?.restaurantName && (
+          <div className="hidden sm:flex flex-col items-end mr-2">
+            <span className="text-sm font-bold text-gray-800">{user.restaurantName}</span>
+            {/* <span className="text-[10px] font-semibold text-brand-600 tracking-widest uppercase">Code: {user.code}</span> */}
+          </div>
+        )}
 
         {/* Notifications */}
-        <button className="relative w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
+        {/* <button className="relative w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
           <Bell size={17} className="text-gray-600" />
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-brand-500 rounded-full ring-2 ring-white" />
-        </button>
+        </button> */}
 
         {/* Apps grid */}
-        <button className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
+        {/* <button className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
           <Grid3X3 size={17} className="text-gray-600" />
-        </button>
+        </button> */}
 
         {/* User */}
         <button className="flex items-center gap-2.5 hover:bg-gray-50 rounded-lg px-2 py-1.5 transition-colors">
